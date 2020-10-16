@@ -68,27 +68,27 @@ class Hue:
     def screen2LED(self):
         all_products = self.get_lights()
         logging.info(f"Following 'Hue lightstrip plus' - products have been found {all_products}.")
-        temp_screen = []
+        temp_screen = []  # only used to check if the screen changes. If not, the colors don't have to be updated
         while 1:
-            screen = np.array(pyautogui.screenshot())
-            if np.array_equal(screen, temp_screen):
+            screen = np.array(pyautogui.screenshot())  # take screenshot from your screen and convert to numpy array
+            if np.array_equal(screen, temp_screen):   # check if screen is the same, if so dont change colors
                 continue
 
-            mean_screens = []
+            mean_screens = []  # we need to get the mean color of the different part of the screens
             num_lights = len(all_products)
-            _split = screen.shape[1] // num_lights
+            _split = screen.shape[1] // num_lights  # in my case I have 3 different LED lights (left, middle, right)
 
-            for i in range(num_lights):
+            for i in range(num_lights): 
                 first_index = _split * i
                 second_index = _split * (i + 1)
-                temp_screen = screen[:, first_index:second_index, :]
-                mean = [np.mean(temp_screen[:,:,0]), np.mean(temp_screen[:,:,1]), np.mean(temp_screen[:,:,2])]
-                mean_screens.append(self.rgb_to_hue(mean))
+                temp_screen = screen[:, first_index:second_index, :]  # split the screen in _split parts -> in my case its 3
+                mean = [np.mean(temp_screen[:,:,0]), np.mean(temp_screen[:,:,1]), np.mean(temp_screen[:,:,2])]  # take the mean RGB color from every sub-screen
+                mean_screens.append(self.rgb_to_hue(mean)) #  convert RGB color to xy
 
             mean_screens = mean_screens[::-1]  # only for my usecase
 
             for i in range(len(all_products)):
-                requests.put(self.BASE_URL + f"lights/{all_products[i]}/state", f'{{"xy": {mean_screens[i]}}}')
+                requests.put(self.BASE_URL + f"lights/{all_products[i]}/state", f'{{"xy": {mean_screens[i]}}}')  # change the color
 
             temp_screen = screen
 
